@@ -47,6 +47,7 @@ class _TodoListPageState extends State<TodoListPage> {
                     onSelected: (value) {
                       if (value == "edit") {
                         // open Edit page
+                        navigateToEditPage(item);
                       } else if (value == "delete") {
                         // delete or remove
                         deleteById(id);
@@ -77,9 +78,22 @@ class _TodoListPageState extends State<TodoListPage> {
     );
   }
 
-  void navigateToAddPage() {
+  Future<void> navigateToAddPage() async {
     final route = MaterialPageRoute(builder: (context) => AddTodoPage());
-    Navigator.push(context, route);
+    await Navigator.push(context, route);
+    setState(() {
+      isLoading = true;
+    });
+    fetchTodo();
+  }
+
+  Future<void> navigateToEditPage(Map item) async {
+    final route = MaterialPageRoute(builder: (context) => AddTodoPage(todo: item));
+    await Navigator.push(context, route);
+    setState(() {
+      isLoading = true;
+    });
+    fetchTodo();
   }
 
   Future<void> deleteById(String id) async {
