@@ -1,10 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:todo_app_using_rest_api/services/todo_service.dart';
+import 'package:todo_app_using_rest_api/utils/snackbar_helper.dart';
 
 class AddTodoPage extends StatefulWidget {
-
   final Map? todo;
 
   const AddTodoPage({Key? key, this.todo}) : super(key: key);
@@ -14,18 +12,15 @@ class AddTodoPage extends StatefulWidget {
 }
 
 class _AddTodoPageState extends State<AddTodoPage> {
-
-
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   bool isEdit = false;
 
   @override
   void initState() {
-
     super.initState();
     final todo = widget.todo;
-    if(todo != null){
+    if (todo != null) {
       isEdit = true;
       final title = todo['title'];
       final description = todo['description'];
@@ -38,7 +33,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text( isEdit ? "Edit Todo" : "Add Todo"),
+        title: Text(isEdit ? "Edit Todo" : "Add Todo"),
       ),
       body: ListView(
         padding: EdgeInsets.all(20),
@@ -59,7 +54,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
           ),
           SizedBox(height: 20),
           ElevatedButton(
-            onPressed: isEdit ? updateData :submitData,
+            onPressed: isEdit ? updateData : submitData,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(isEdit ? "Update" : "Submit"),
@@ -70,76 +65,44 @@ class _AddTodoPageState extends State<AddTodoPage> {
     );
   }
 
-
 //======================================================================
   Future<void> updateData() async {
-
     final todo = widget.todo;
-    if(todo == null){
-
-      print("uhlunhlunliunliujn;luinljn");
+    if (todo == null) {
+      print("You can not call updated without todo data");
       return;
     }
     final id = todo['_id'];
-    final title = titleController.text;
-    final description = descriptionController.text;
-    final body = {
-      "title": title,
-      "description": description,
-      "is_completed": false,
-    };
-    final url = 'https://api.nstack.in/v1/todos/$id';
-    final uri = Uri.parse(url);
-    final response = await http.put(uri,
-        body: jsonEncode(body), headers: {'Content-Type': 'application/json'});
 
+    final isSuccess = await TodoService.updateTodo(id, body);
 
-
-    if (response.statusCode == 200) {
-      showSuccessMessage('Updation Success');
+    if (isSuccess) {
+      showSuccessMessage(context, message: 'Updation Success');
     } else {
-      showErrorMessage('Updation Failed');
+      showErrorMessage(context, message: 'Updation Failed');
     }
   }
-
 
   //===================================================================
   Future<void> submitData() async {
+    final isSuccess = await TodoService.addTodo(body);
+
+    if (isSuccess) {
+      titleController.text = '';
+      descriptionController.text = '';
+      showSuccessMessage(context, message: 'Creation Success');
+    } else {
+      showErrorMessage(context, message: 'Creation Failed');
+    }
+  }
+
+  Map get body {
     final title = titleController.text;
     final description = descriptionController.text;
-    final body = {
+    return {
       "title": title,
       "description": description,
       "is_completed": false,
     };
-
-    final url = 'https://api.nstack.in/v1/todos';
-    final uri = Uri.parse(url);
-    final response = await http.post(uri,
-        body: jsonEncode(body), headers: {'Content-Type': 'application/json'});
-
-    if (response.statusCode == 201) {
-      titleController.text = '';
-      descriptionController.text = '';
-      showSuccessMessage('Creation Success');
-    } else {
-      showErrorMessage('Creation Failed');
-    }
-  }
-
-  void showSuccessMessage(String message) {
-    final snackBar = SnackBar(content: Text(message));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
-  void showErrorMessage(String message) {
-    final snackBar = SnackBar(
-      content: Text(
-        message,
-        style: TextStyle(color: Colors.white),
-      ),
-      backgroundColor: Colors.red,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
